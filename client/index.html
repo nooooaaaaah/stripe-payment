@@ -16,54 +16,58 @@
             <div class="sr-main">
                 <h1>Pay Me</h1>
                 <form action="" id="payment-form" class="sr-payment-form">
-                    <div class="sr-amount-options">
-                        <label>
+                    <ul class="donate-now">
+                        <li>
                             <input
                                 type="radio"
+                                id="amount1"
                                 name="amount"
                                 value="1"
                                 class="sr-radio-input"
                             />
-                            $1
-                        </label>
-                        <label>
+                            <label for="amount1">$1</label>
+                        </li>
+                        <li>
                             <input
                                 type="radio"
+                                id="amount5"
                                 name="amount"
                                 value="5"
                                 class="sr-radio-input"
                             />
-                            $5
-                        </label>
-                        <label>
+                            <label for="amount5">$5</label>
+                        </li>
+                        <li>
                             <input
                                 type="radio"
+                                id="amount20"
                                 name="amount"
                                 value="20"
                                 class="sr-radio-input"
                             />
-                            $20
-                        </label>
-                        <label>
+                            <label for="amount20">$20</label>
+                        </li>
+                        <li>
                             <input
                                 type="radio"
+                                id="amountCustom"
                                 name="amount"
                                 value="custom"
                                 class="sr-radio-input"
                             />
-                            Custom
-                        </label>
-                        <div class="sr-custom-amount" id="custom-amount">
-                            <span class="sr-currency-symbol">$</span>
-                            <input
-                                class="sr-input"
-                                type="number"
-                                id="custom-amount-input"
-                                name="custom-amount"
-                                min="1"
-                                step="0.01"
-                            />
-                        </div>
+                            <label for="amountCustom">Custom</label>
+                        </li>
+                    </ul>
+                    <div class="sr-custom-amount" id="custom-amount">
+                        <span class="sr-currency-symbol">$</span>
+                        <input
+                            class="sr-input"
+                            type="number"
+                            id="custom-amount-input"
+                            name="custom-amount"
+                            min="1"
+                            step="0.01"
+                        />
                     </div>
                     <div id="payment-element" class="sr-card-element"></div>
                     <div id="error-messages" class="sr-field-error"></div>
@@ -72,17 +76,23 @@
             </div>
         </div>
         <script>
-            // JavaScript to show/hide custom amount input field
-            document.querySelectorAll(".sr-radio-input").forEach((input) => {
-                input.addEventListener("change", () => {
-                    const customAmountField =
-                        document.getElementById("custom-amount");
-                    if (input.value === "custom") {
-                        customAmountField.style.display = "flex";
-                    } else {
-                        customAmountField.style.display = "none";
-                    }
+            document.addEventListener("DOMContentLoaded", function () {
+                const radioButtons =
+                    document.querySelectorAll(".sr-radio-input");
+                const customAmountField =
+                    document.getElementById("custom-amount");
+
+                radioButtons.forEach((radio) => {
+                    radio.addEventListener("change", function () {
+                        if (this.value === "custom") {
+                            customAmountField.style.display = "flex";
+                        } else {
+                            customAmountField.style.display = "none";
+                        }
+                    });
                 });
+
+                customAmountField.style.display = "none";
             });
         </script>
     </body>
