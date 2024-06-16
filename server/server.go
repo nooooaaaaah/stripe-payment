@@ -34,6 +34,7 @@ func main() {
 	http.HandleFunc("/config", handleConfig)
 	http.HandleFunc("/webhook", handleWebhook)
 	http.HandleFunc("/create-payment-intent", handleCreatePaymentIntent)
+	http.HandleFunc("/update-payment-intent", handleUpdatePaymentIntent) // New endpoint
 
 	log.Println("server running at 0.0.0.0:4242")
 	http.ListenAndServe("0.0.0.0:4242", nil)
@@ -63,17 +64,67 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+type updatePaymentIntentReq struct {
+	PaymentIntentID string `json:"paymentIntentID"`
+	Amount          int64  `json:"amount"`
+}
+
+func handleUpdatePaymentIntent(w http.ResponseWriter, r *http.Request) {
+	req := updatePaymentIntentReq{}
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		writeJSONErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if req.Amount <= 0 {
+		writeJSONErrorMessage(w, "Invalid amount", http.StatusBadRequest)
+		return
+	}
+
+	params := &stripe.PaymentIntentParams{
+		Amount: stripe.Int64(req.Amount),
+	}
+
+	pi, err := paymentintent.Update(req.PaymentIntentID, params)
+	if err != nil {
+		if stripeErr, ok := err.(*stripe.Error); ok {
+			fmt.Printf("Stripe error: %v\n", stripeErr.Error())
+			writeJSONErrorMessage(w, stripeErr.Error(), http.StatusBadRequest)
+		} else {
+			fmt.Printf("Server error: %v\n", err.Error())
+			writeJSONErrorMessage(w, "Unknown server error", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	writeJSON(w, struct {
+		ClientSecret string `json:"clientSecret"`
+	}{
+		ClientSecret: pi.ClientSecret,
+	})
+}
+
 type paymentIntentCreateReq struct {
 	Currency          string `json:"currency"`
 	PaymentMethodType string `json:"paymentMethodType"`
+	Amount            int64  `json:"amount"`
 }
 
 func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 	req := paymentIntentCreateReq{}
-	json.NewDecoder(r.Body).Decode(&req)
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		writeJSONErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	if req.Amount <= 0 {
+		writeJSONErrorMessage(w, "Invalid amount", http.StatusBadRequest)
+		return
+	}
 
 	var formattedPaymentMethodType []*string
-
 	if req.PaymentMethodType == "link" {
 		formattedPaymentMethodType = append(formattedPaymentMethodType, stripe.String("link"), stripe.String("card"))
 	} else {
@@ -81,13 +132,11 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := &stripe.PaymentIntentParams{
-		Amount:             stripe.Int64(5999),
+		Amount:             stripe.Int64(req.Amount),
 		Currency:           stripe.String(req.Currency),
 		PaymentMethodTypes: formattedPaymentMethodType,
 	}
 
-	// If this is for an ACSS payment, we add payment_method_options to create
-	// the Mandate.
 	if req.PaymentMethodType == "acss_debit" {
 		params.PaymentMethodOptions = &stripe.PaymentIntentPaymentMethodOptionsParams{
 			ACSSDebit: &stripe.PaymentIntentPaymentMethodOptionsACSSDebitParams{
@@ -101,16 +150,13 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 
 	pi, err := paymentintent.New(params)
 	if err != nil {
-		// Try to safely cast a generic error to a stripe.Error so that we can get at
-		// some additional Stripe-specific information about what went wrong.
 		if stripeErr, ok := err.(*stripe.Error); ok {
-			fmt.Printf("Other Stripe error occurred: %v\n", stripeErr.Error())
-			writeJSONErrorMessage(w, stripeErr.Error(), 400)
+			fmt.Printf("Stripe error: %v\n", stripeErr.Error())
+			writeJSONErrorMessage(w, stripeErr.Error(), http.StatusBadRequest)
 		} else {
-			fmt.Printf("Other error occurred: %v\n", err.Error())
-			writeJSONErrorMessage(w, "Unknown server error", 500)
+			fmt.Printf("Server error: %v\n", err.Error())
+			writeJSONErrorMessage(w, "Unknown server error", http.StatusInternalServerError)
 		}
-
 		return
 	}
 
