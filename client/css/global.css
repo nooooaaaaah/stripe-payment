@@ -1,0 +1,190 @@
+/* Global settings and body */
+body {
+    background-color: #091916;
+    color: #e8f9f7;
+    font-family: "Ideal Sans", system-ui, sans-serif;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0d2e2f 25%, #081411 75%);
+}
+
+/* Container for the main content */
+.sr-root {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 2rem;
+}
+
+.sr-main {
+    backdrop-filter: blur(10px);
+    padding: 4rem 6rem;
+    border-radius: 16px;
+    box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.3),
+        0 0 20px rgba(82, 139, 255, 0.5);
+    max-width: 1200px;
+    width: 100%;
+    text-align: center;
+    background-color: rgba(8, 20, 17, 0.9); /* Semi-transparent background */
+}
+
+/* Headings */
+h1 {
+    font-size: 4rem;
+    margin-bottom: 3rem;
+    color: #528bff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Form styling */
+.sr-payment-form {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* Radio buttons styling */
+.sr-amount-options {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 1.5rem;
+}
+
+.sr-amount-options label {
+    background-color: rgba(
+        8,
+        20,
+        17,
+        0.9
+    ); /* Matching semi-transparent background */
+    border: 2px solid rgba(82, 139, 255, 0.8); /* Border color with transparency */
+    border-radius: 10px; /* Slightly smaller rounded corners */
+    padding: 0.75rem 1.5rem; /* Reduced padding */
+    font-size: 18px; /* Slightly smaller font size */
+    color: #e8f9f7; /* Text color */
+    cursor: pointer;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2); /* Inner shadow for depth */
+    transition:
+        background-color 0.3s ease-in-out,
+        box-shadow 0.3s ease-in-out,
+        color 0.3s ease-in-out; /* Smooth transitions */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px; /* Reduced width for uniform size */
+    text-align: center; /* Center text */
+}
+
+.sr-amount-options input[type="radio"] {
+    display: none; /* Hide default radio button */
+}
+
+.sr-amount-options input[type="radio"]:checked + label {
+    background-color: rgba(
+        82,
+        139,
+        255,
+        0.8
+    ); /* Highlight selected option with more contrast */
+    color: #081411; /* Dark text color for contrast */
+    box-shadow: 0 0 10px rgba(82, 139, 255, 0.5); /* Glowing effect for selection */
+    border-color: rgba(82, 139, 255, 1); /* More pronounced border */
+    transform: scale(1.05); /* Slightly enlarge the selected option */
+}
+
+/* Custom amount input styling */
+.sr-custom-amount {
+    display: none; /* Hidden by default */
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* Space between currency symbol and input */
+}
+
+.sr-currency-symbol {
+    font-size: 18px; /* Smaller font size for consistency */
+    color: #e8f9f7;
+}
+
+.sr-input {
+    padding: 1rem 1.5rem; /* Adjusted padding for consistency */
+    background-color: rgba(8, 20, 17, 0.9); /* Semi-transparent background */
+    border: 2px solid rgba(82, 139, 255, 0.8); /* Border color with transparency */
+    border-radius: 10px; /* Slightly smaller rounded corners */
+    font-size: 18px; /* Font size for readability */
+    color: #e8f9f7; /* Text color */
+    width: 100%; /* Full width input */
+    box-sizing: border-box; /* Ensures padding and border are included in the element's total width and height */
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2); /* Inner shadow for depth */
+    outline: none; /* Remove default outline */
+    transition:
+        border-color 0.3s ease-in-out,
+        box-shadow 0.3s ease-in-out; /* Smooth transition for focus state */
+}
+
+.sr-input:focus {
+    border-color: #528bff; /* Border color on focus */
+    box-shadow: 0 0 10px rgba(82, 139, 255, 0.5); /* Glowing shadow on focus */
+}
+
+.sr-input::placeholder {
+    color: #9ca3af; /* Placeholder text color */
+}
+
+/* Error messages */
+.sr-field-error {
+    color: #ff005e;
+    font-size: 16px;
+    margin-top: 0.5rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Button styling */
+button {
+    background: linear-gradient(135deg, #3a6ecc 0%, #528bff 100%);
+    color: #e8f9f7;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    cursor: pointer;
+    transition:
+        background 0.2s ease-in-out,
+        transform 0.2s;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+button:hover {
+    background: linear-gradient(135deg, #528bff 0%, #3a6ecc 100%);
+    transform: scale(1.05);
+}
+
+button:disabled {
+    background-color: #42464d;
+    cursor: not-allowed;
+}
+
+/* Focus state for accessibility */
+button:focus,
+.sr-card-element:focus,
+.sr-input:focus {
+    outline: 2px solid #528bff;
+    outline-offset: 2px;
+}
+
+/* Media queries for responsiveness */
+@media (max-width: 600px) {
+    .sr-main {
+        padding: 3rem 4rem;
+    }
+
+    h1 {
+        font-size: 3rem;
+    }
+}
