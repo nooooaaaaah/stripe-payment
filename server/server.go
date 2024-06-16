@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/joho/godotenv"
 	"github.com/stripe/stripe-go/v72"
@@ -37,7 +38,9 @@ func main() {
 	http.HandleFunc("/update-payment-intent", handleUpdatePaymentIntent) // New endpoint
 
 	log.Println("server running at 0.0.0.0:4242")
-	http.ListenAndServe("0.0.0.0:4242", nil)
+	if err := http.ListenAndServe("0.0.0.0:4242", nil); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
+	}
 }
 
 // ErrorResponseMessage represents the structure of the error
@@ -65,8 +68,8 @@ func handleConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 type updatePaymentIntentReq struct {
-	PaymentIntentID string `json:"paymentIntentID"`
-	Amount          int64  `json:"amount"`
+	ClientSecret string `json:"clientSecret"`
+	Amount       int64  `json:"amount"`
 }
 
 func handleUpdatePaymentIntent(w http.ResponseWriter, r *http.Request) {
@@ -81,12 +84,16 @@ func handleUpdatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 		writeJSONErrorMessage(w, "Invalid amount", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("updated ammount: ", req.Amount)
 
 	params := &stripe.PaymentIntentParams{
 		Amount: stripe.Int64(req.Amount),
 	}
 
-	pi, err := paymentintent.Update(req.PaymentIntentID, params)
+	re := regexp.MustCompile(`pi_[A-Za-z0-9]+`)
+	paymentIntentID := re.FindString(req.ClientSecret)
+
+	pi, err := paymentintent.Update(paymentIntentID, params)
 	if err != nil {
 		if stripeErr, ok := err.(*stripe.Error); ok {
 			fmt.Printf("Stripe error: %v\n", stripeErr.Error())
@@ -123,6 +130,7 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 		writeJSONErrorMessage(w, "Invalid amount", http.StatusBadRequest)
 		return
 	}
+	fmt.Println("amount: ", req.Amount)
 
 	var formattedPaymentMethodType []*string
 	if req.PaymentMethodType == "link" {
