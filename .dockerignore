@@ -1,0 +1,20 @@
+# Ignore Go binaries
+main
+
+# Ignore the Dockerfile and .dockerignore file
+Dockerfile
+.dockerignore
+
+# Ignore the client build artifacts if any
+client/*.js
+client/*.html
+client/*.css
+client/favicon.ico
+client/complete.js
+client/complete.html
+
+# Ignore system files
+*.log
+*.tmp
+.DS_Store
+
