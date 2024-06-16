@@ -1,10 +1,13 @@
-# Use the official Golang image to build the application
-FROM golang:1.22.2 as build
+# Stage 1: Build the Go binary
+FROM golang:1.22.2-alpine AS build
+
+# Install git for fetching dependencies
+RUN apk add --no-cache git
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum to download dependencies
+# Copy go.mod and go.sum files to download dependencies
 COPY server/go.mod server/go.sum ./
 
 # Download dependencies
@@ -13,14 +16,14 @@ RUN go mod download
 # Copy the source code into the container
 COPY server/*.go ./
 
-# Build the Go app
-RUN go build -o main .
+# Build the Go app statically
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
 
-# Use a minimal image to serve the application
-FROM debian:bullseye-slim
+# Stage 2: Create the runtime container
+FROM alpine:latest
 
-# Install CA certificates to handle HTTPS requests
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+# Install certificates and bash for Alpine
+RUN apk add --no-cache ca-certificates bash
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -38,6 +41,5 @@ ENV PORT 4242
 # Expose port 4242 to the outside world
 EXPOSE 4242
 
-# Run the application
-CMD ["./main"]
-
+# Set the entry point to execute the Go binary
+ENTRYPOINT ["./main"]
