@@ -4,7 +4,7 @@ FROM golang:1.22.2-alpine AS build
 # Install git for fetching dependencies
 RUN apk add --no-cache git
 
-# Set the current working directory inside the container
+# Set the working directory inside the container
 WORKDIR /app/server
 
 # Copy go.mod and go.sum files to download dependencies
@@ -17,7 +17,7 @@ RUN go mod download
 COPY server/ ./
 
 # Build the Go app statically
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/server/main .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
 
 # Stage 2: Create the runtime container
 FROM alpine:latest
@@ -25,7 +25,7 @@ FROM alpine:latest
 # Install certificates and bash for Alpine
 RUN apk add --no-cache ca-certificates bash
 
-# Set the current working directory inside the container
+# Set the working directory inside the container
 WORKDIR /app
 
 # Copy the binary from the build stage

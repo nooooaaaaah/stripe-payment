@@ -20,13 +20,6 @@ func main() {
 
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
-	// For sample support and debugging, not required for production:
-	stripe.SetAppInfo(&stripe.AppInfo{
-		Name:    "stripe-samples/your-sample-name",
-		Version: "0.0.1",
-		URL:     "https://github.com/stripe-samples",
-	})
-
 	http.Handle("/", http.FileServer(http.Dir(os.Getenv("STATIC_DIR"))))
 	http.HandleFunc("/config", handleConfig)
 	http.HandleFunc("/webhook", handleWebhook)
