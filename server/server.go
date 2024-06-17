@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -21,14 +20,21 @@ func main() {
 	stripe.Key = os.Getenv("STRIPE_SECRET_KEY")
 
 	http.Handle("/", http.FileServer(http.Dir(os.Getenv("STATIC_DIR"))))
-	http.HandleFunc("/config", handleConfig)
-	http.HandleFunc("/webhook", handleWebhook)
-	http.HandleFunc("/create-payment-intent", handleCreatePaymentIntent)
-	http.HandleFunc("/update-payment-intent", handleUpdatePaymentIntent) // New endpoint
+	http.HandleFunc("/config", logRequest(handleConfig))
+	http.HandleFunc("/webhook", logRequest(handleWebhook))
+	http.HandleFunc("/create-payment-intent", logRequest(handleCreatePaymentIntent))
+	http.HandleFunc("/update-payment-intent", logRequest(handleUpdatePaymentIntent)) // New endpoint
 
 	log.Println("server running at 0.0.0.0:4242")
 	if err := http.ListenAndServe("0.0.0.0:4242", nil); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
+	}
+}
+
+func logRequest(handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Attempted request: %s %s", r.Method, r.URL.Path)
+		handler(w, r)
 	}
 }
 
@@ -62,18 +68,21 @@ type updatePaymentIntentReq struct {
 }
 
 func handleUpdatePaymentIntent(w http.ResponseWriter, r *http.Request) {
+	log.Println("Received request to update payment intent")
 	req := updatePaymentIntentReq{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
+		log.Printf("Error decoding request body: %v", err)
 		writeJSONErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if req.Amount <= 0 {
+		log.Println("Invalid amount provided")
 		writeJSONErrorMessage(w, "Invalid amount", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("updated ammount: ", req.Amount)
+	log.Printf("Updating amount to: %d", req.Amount)
 
 	params := &stripe.PaymentIntentParams{
 		Amount: stripe.Int64(req.Amount),
@@ -85,10 +94,10 @@ func handleUpdatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 	pi, err := paymentintent.Update(paymentIntentID, params)
 	if err != nil {
 		if stripeErr, ok := err.(*stripe.Error); ok {
-			fmt.Printf("Stripe error: %v\n", stripeErr.Error())
+			log.Printf("Stripe error: %v", stripeErr.Error())
 			writeJSONErrorMessage(w, stripeErr.Error(), http.StatusBadRequest)
 		} else {
-			fmt.Printf("Server error: %v\n", err.Error())
+			log.Printf("Server error: %v", err.Error())
 			writeJSONErrorMessage(w, "Unknown server error", http.StatusInternalServerError)
 		}
 		return
@@ -108,18 +117,21 @@ type paymentIntentCreateReq struct {
 }
 
 func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request) {
+	log.Println("Received request to create payment intent")
 	req := paymentIntentCreateReq{}
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
+		log.Printf("Error decoding request body: %v", err)
 		writeJSONErrorMessage(w, "Invalid request payload", http.StatusBadRequest)
 		return
 	}
 
 	if req.Amount <= 0 {
+		log.Println("Invalid amount provided")
 		writeJSONErrorMessage(w, "Invalid amount", http.StatusBadRequest)
 		return
 	}
-	fmt.Println("amount: ", req.Amount)
+	log.Printf("Creating payment intent with amount: %d", req.Amount)
 
 	var formattedPaymentMethodType []*string
 	if req.PaymentMethodType == "link" {
@@ -148,10 +160,10 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 	pi, err := paymentintent.New(params)
 	if err != nil {
 		if stripeErr, ok := err.(*stripe.Error); ok {
-			fmt.Printf("Stripe error: %v\n", stripeErr.Error())
+			log.Printf("Stripe error: %v", stripeErr.Error())
 			writeJSONErrorMessage(w, stripeErr.Error(), http.StatusBadRequest)
 		} else {
-			fmt.Printf("Server error: %v\n", err.Error())
+			log.Printf("Server error: %v", err.Error())
 			writeJSONErrorMessage(w, "Unknown server error", http.StatusInternalServerError)
 		}
 		return
@@ -165,6 +177,7 @@ func handleCreatePaymentIntent(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleWebhook(w http.ResponseWriter, r *http.Request) {
+	log.Println("Received webhook event")
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
@@ -184,7 +197,7 @@ func handleWebhook(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if event.Type == "payment_intent.succeeded" {
-		fmt.Println("Payment completed!")
+		log.Println("Payment completed!")
 	}
 
 	writeJSON(w, nil)
