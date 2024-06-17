@@ -1,48 +1,44 @@
-# Stage 1: Build the Go binary
+# Stage 1: Build the Go app
 FROM golang:1.22.2-alpine AS build
 
-# Install git for fetching dependencies
+# Install necessary build tools
 RUN apk add --no-cache git
 
-# Set the working directory inside the container
+# Set the working directory for the build
 WORKDIR /app/server
 
-# Copy go.mod and go.sum files to download dependencies
+# Copy the Go modules manifest and download dependencies
 COPY server/go.mod server/go.sum ./
-
-# Download dependencies
 RUN go mod download
 
-# Copy the source code into the container
+# Copy the source code
 COPY server/ ./
 
-# Build the Go app statically
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o main .
+# Build the Go app
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/main .
 
-# Stage 2: Create the runtime container
+# Stage 2: Create the final image
 FROM alpine:latest
 
-# Install certificates and bash for Alpine
-RUN apk add --no-cache ca-certificates bash
+# Install necessary runtime dependencies
+RUN apk add --no-cache ca-certificates
 
-# Set the working directory inside the container
+# Set the working directory for the final container
 WORKDIR /app
 
-# Copy the binary from the build stage
-COPY --from=build /app/server/main /app/server/main
+# Copy the built binary from the build stage
+COPY --from=build /app/main /app/server/main
 
-# Copy the .env file
-COPY server/.env /app/server/.env
 
-# Copy static files from the client directory
+# Copy static files from client directory
 COPY client /app/client
 
-# Set environment variables
-ENV STATIC_DIR /app/client
-ENV PORT 4242
+# Ensure the binary has the correct permissions
+RUN chmod +x /app/server/main
 
-# Expose port 4242 to the outside world
+
+# Expose the application port
 EXPOSE 4242
 
-# Set the entry point to execute the Go binary
+# Command to run the executable
 ENTRYPOINT ["/app/server/main"]
