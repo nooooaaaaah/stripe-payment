@@ -31,6 +31,9 @@ WORKDIR /app
 # Copy the binary from the build stage
 COPY --from=build /app/server/main /app/server/main
 
+# Copy the .env file
+COPY server/.env /app/server/.env
+
 # Copy static files from the client directory
 COPY client /app/client
 
